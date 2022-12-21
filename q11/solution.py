@@ -1,3 +1,4 @@
+import numpy as np
 
 def read_input(file_path):
     with open(file_path) as f:
@@ -9,9 +10,9 @@ def parse_monkeys(monkeys_list):
     for monkey in monkeys_list:
         monkey_rows = monkey.splitlines()
         monkeys_dict[int(monkey_rows[0].split()[1][:-1])] = {
-            "worries": [
+            "worries": np.array([
                 int(i) for i in monkey_rows[1].split(":")[1].split(",")
-            ],
+            ]),
             "operation": monkey_rows[2].split("=")[1],
             "test": int(monkey_rows[3].split()[-1]),
             "test_output": {
@@ -23,62 +24,40 @@ def parse_monkeys(monkeys_list):
 
     return monkeys_dict
 
-def perform_rounds(monkeys_dict, relief=True, rounds=20):
-    num_monkeys = len(monkeys_dict)
-    round = 1
-    while round <= rounds:
-        if round%1000==0:
-            print("Round:", round)
-        for monkey_id in range(num_monkeys):
-            monkey = monkeys_dict[monkey_id].copy()
-
-            for old in monkey["worries"]:
-                new_worry = eval(monkey["operation"])
-                if relief:
-                    new_worry = int(new_worry / 3)
-                if new_worry % monkey["test"] == 0:
-                    throw_to = monkey["test_output"][True]
-                else:
-                    throw_to = monkey["test_output"][False]
-
-                monkeys_dict[throw_to]["worries"].append(new_worry)
-
-            monkey["inspected"] += len(monkey["worries"])
-            monkey["worries"] = []
-            monkeys_dict[monkey_id] = monkey
-
-        round += 1
-
-    return monkeys_dict
-
 
 def perform_rounds_new(monkeys_dict, relief=True, rounds=20):
     num_monkeys = len(monkeys_dict)
     round = 1
     while round <= rounds:
-        if round%1000==0:
-            print("Round:", round)
         for monkey_id in range(num_monkeys):
             monkey = monkeys_dict[monkey_id].copy()
 
-            new_worries = [eval(monkey["operation"]) for old in monkey["worries"]]
-            if relief:
-                new_worries = [int(worry/3) for worry in new_worries]
-            condition = [(worry % monkey["test"] == 0) for worry in new_worries]
-
-            true_conditions = [i for (i, v) in zip(new_worries, condition) if v]
-            monkeys_dict[monkey["test_output"][True]]["worries"].extend(
-                true_conditions
+            new_worries = np.array(
+                [eval(monkey["operation"]) for old in monkey["worries"]]
             )
-            false_conditions = [i for (i, v) in zip(new_worries, condition) if not v]
-            monkeys_dict[monkey["test_output"][False]]["worries"].extend(
-                false_conditions
+            if relief:
+                new_worries = new_worries//3
+            condition = new_worries % monkey["test"] == 0
+
+            true_conditions = new_worries[condition]
+            monkeys_dict[monkey["test_output"][True]]["worries"] = np.append(
+                monkeys_dict[monkey["test_output"][True]]["worries"], true_conditions
+            )
+            false_conditions = new_worries[~condition]
+            monkeys_dict[monkey["test_output"][False]]["worries"] = np.append(
+                monkeys_dict[monkey["test_output"][False]]["worries"], false_conditions
             )
 
             monkey["inspected"] += len(monkey["worries"])
-            monkey["worries"] = []
-            monkeys_dict[monkey_id] = monkey
+            monkey["worries"] = np.array([])
+            monkeys_dict[monkey_id] = monkey.copy()
 
+        if round%1000==0 or round ==20:
+            print("Round:", round)
+            print("monkey 0:", monkeys_dict[0]["inspected"])
+            print("monkey 1:", monkeys_dict[1]["inspected"])
+            print("monkey 2:", monkeys_dict[2]["inspected"])
+            print("monkey 3:", monkeys_dict[3]["inspected"])
         round += 1
 
     return monkeys_dict
@@ -114,11 +93,11 @@ def part2(file_path):
 
 if __name__ == "__main__":
     print("Part 1")
-    print(part1("input.txt"))
+    print(part1("dummy.txt"))
     print()
 
     print("Part 2")
-    print(part2("input.txt"))
+    print(part2("dummy.txt"))
     print()
 
 
