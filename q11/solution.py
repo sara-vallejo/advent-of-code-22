@@ -12,7 +12,7 @@ def parse_monkeys(monkeys_list):
         monkeys_dict[int(monkey_rows[0].split()[1][:-1])] = {
             "worries": np.array([
                 int(i) for i in monkey_rows[1].split(":")[1].split(",")
-            ]),
+            ], dtype='int64'),
             "operation": monkey_rows[2].split("=")[1],
             "test": int(monkey_rows[3].split()[-1]),
             "test_output": {
@@ -33,7 +33,7 @@ def perform_rounds_new(monkeys_dict, relief=True, rounds=20):
             monkey = monkeys_dict[monkey_id].copy()
 
             new_worries = np.array(
-                [eval(monkey["operation"]) for old in monkey["worries"]]
+                [eval(monkey["operation"]) for old in monkey["worries"]], dtype='int32'
             )
             if relief:
                 new_worries = new_worries//3
@@ -49,7 +49,7 @@ def perform_rounds_new(monkeys_dict, relief=True, rounds=20):
             )
 
             monkey["inspected"] += len(monkey["worries"])
-            monkey["worries"] = np.array([])
+            monkey["worries"] = np.array([], dtype='int64')
             monkeys_dict[monkey_id] = monkey.copy()
 
         if round%1000==0 or round ==20:
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     print()
 
     print("Part 2")
-    print(part2("dummy.txt"))
+    print(part2("input.txt"))
     print()
 
 
