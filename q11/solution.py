@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 def read_input(file_path):
     with open(file_path) as f:
@@ -12,7 +13,7 @@ def parse_monkeys(monkeys_list):
         monkeys_dict[int(monkey_rows[0].split()[1][:-1])] = {
             "worries": np.array([
                 int(i) for i in monkey_rows[1].split(":")[1].split(",")
-            ], dtype='int64'),
+            ]),
             "operation": monkey_rows[2].split("=")[1],
             "test": int(monkey_rows[3].split()[-1]),
             "test_output": {
@@ -25,7 +26,7 @@ def parse_monkeys(monkeys_list):
     return monkeys_dict
 
 
-def perform_rounds_new(monkeys_dict, relief=True, rounds=20):
+def perform_rounds_new(monkeys_dict, relief=True, mod=None, rounds=20):
     num_monkeys = len(monkeys_dict)
     round = 1
     while round <= rounds:
@@ -33,10 +34,12 @@ def perform_rounds_new(monkeys_dict, relief=True, rounds=20):
             monkey = monkeys_dict[monkey_id].copy()
 
             new_worries = np.array(
-                [eval(monkey["operation"]) for old in monkey["worries"]], dtype='int32'
+                [eval(monkey["operation"]) for old in monkey["worries"]]
             )
             if relief:
                 new_worries = new_worries//3
+            else:
+                new_worries = new_worries % mod
             condition = new_worries % monkey["test"] == 0
 
             true_conditions = new_worries[condition]
@@ -49,15 +52,9 @@ def perform_rounds_new(monkeys_dict, relief=True, rounds=20):
             )
 
             monkey["inspected"] += len(monkey["worries"])
-            monkey["worries"] = np.array([], dtype='int64')
+            monkey["worries"] = np.array([])
             monkeys_dict[monkey_id] = monkey.copy()
 
-        if round%1000==0 or round ==20:
-            print("Round:", round)
-            print("monkey 0:", monkeys_dict[0]["inspected"])
-            print("monkey 1:", monkeys_dict[1]["inspected"])
-            print("monkey 2:", monkeys_dict[2]["inspected"])
-            print("monkey 3:", monkeys_dict[3]["inspected"])
         round += 1
 
     return monkeys_dict
@@ -80,7 +77,8 @@ def part1(file_path):
 def part2(file_path):
     monkeys_list = read_input(file_path)
     monkeys_dict = parse_monkeys(monkeys_list)
-    monkeys_dict = perform_rounds_new(monkeys_dict, relief=False, rounds=10000)
+    mod = math.prod([x["test"] for x in monkeys_dict.values()])
+    monkeys_dict = perform_rounds_new(monkeys_dict, relief=False, mod=mod, rounds=10000)
 
     inspected_items = []
     for monkey in monkeys_dict.values():
@@ -93,7 +91,7 @@ def part2(file_path):
 
 if __name__ == "__main__":
     print("Part 1")
-    print(part1("dummy.txt"))
+    print(part1("input.txt"))
     print()
 
     print("Part 2")
